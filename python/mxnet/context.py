@@ -34,6 +34,10 @@ class Context(with_metaclass(_MXClassPropertyMetaClass, object)):
 
     One can use mx.cpu and mx.gpu for short.
 
+    See also
+    ----------
+    `How to run MXNet on multiple CPU/GPUs <http://mxnet.io/faq/multi_devices.html>`
+    for more details.
 
     Parameters
     ----------
