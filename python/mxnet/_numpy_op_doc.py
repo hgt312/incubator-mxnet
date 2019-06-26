@@ -71,39 +71,64 @@ def _np_ones_like(a):
     pass
 
 
-def _np_zeros_like(a, dtype=None, order='K', subok=True):
+def _np_zeros_like(a, dtype=None, **kwargs):
     """
-    Return an array of zeros with the same shape and type as a given array.
+    zeros_like(a, dtype=None, order='C', subok=True)
+
+    Return an array of zeros with the same shape as a given array.
+
     Parameters
     ----------
-    a : array_like
-        The shape and data-type of `a` define these same attributes of
+    a : ndarray
+        The shape of `a` define these same attributes of
         the returned array.
     dtype : data-type, optional
         Overrides the data type of the result.
         .. versionadded:: 1.6.0
-    order : {'C', 'F', 'A', or 'K'}, optional
-        Overrides the memory layout of the result. 'C' means C-order,
-        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
-        'C' otherwise. 'K' means match the layout of `a` as closely
-        as possible.
-        .. versionadded:: 1.6.0
-    subok : bool, optional.
-        If True, then the newly created array will use the sub-class
-        type of 'a', otherwise it will be a base-class array. Defaults
-        to True.
-    shape : int or sequence of ints, optional.
-        Overrides the shape of the result. If order='K' and the number of
-        dimensions is unchanged, will try to keep order, otherwise,
-        order='C' is implied.
-        .. versionadded:: 1.17.0
+    order : {'C'}, optional, default: C
+        Store multi-dimensional data in row-major
+        (C-style) in memory. Note that the column-major is not supported yet.
+    ctx : Context, optional
+        An optional device context (default is the current default context).
+    
     Returns
     -------
     out : ndarray
-        Array of zeros with the same shape and type as `a`.
+        Array of zeros with the same shape as `a`.
+
+    See Also
+    --------
+    empty_like : Return an empty array with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    full_like : Return a new array with shape of input filled with value.
+    zeros : Return a new array setting values to zero.
+
+    Examples
+    --------
+    >>> x = np.arange(6)
+    >>> x = x.reshape((2, 3))
+    >>> x
+    array([[0, 1, 2],
+           [3, 4, 5]])
+    >>> np.zeros_like(x)
+    array([[0, 0, 0],
+           [0, 0, 0]])
+    >>> y = np.arange(3, dtype=float)
+    >>> y
+    array([0., 1., 2.])
+    >>> np.zeros_like(y)
+    array([0.,  0.,  0.])
+
     Notes
     -----
-    parameter 'dtype', 'order', 'subok', and 'shape' not support
+
+    This function differs to the original `numpy.ones
+    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.zeros_like.html>`_ in
+    the following aspects:
+    - The parameter `dtype` and `subok` are not supported now.
+    - Only row-major is supported.
+    - There is an additional `ctx` argument to specify the device, e.g. the i-th
+      GPU.
     """
     pass
 
