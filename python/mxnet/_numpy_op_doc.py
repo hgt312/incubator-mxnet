@@ -96,6 +96,7 @@ def _np_zeros_like(a, dtype=None, **kwargs):
     out : ndarray
         Array of zeros with the same shape as `a`.
 
+
     See Also
     --------
     empty_like : Return an empty array with shape and type of input.
@@ -186,7 +187,7 @@ def _npi_multinomial(a):
     pass
 
 
-def _npi_linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0, **kwargs):  # pylint: disable=too-many-arguments
+def _npi_linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0, **kwargs):
     """Return evenly spaced numbers over a specified interval.
 
     Returns num evenly spaced samples, calculated over the interval [start, stop].
@@ -226,10 +227,47 @@ def _npi_linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         Only returned if retstep is True
         Size of spacing between samples.
 
+
+    See Also
+    --------
+    arange : Similar to `linspace`, but uses a step size (instead of the
+             number of samples).
+    geomspace : Similar to `linspace`, but with numbers spaced evenly on a log
+                scale (a geometric progression).
+    logspace : Similar to `geomspace`, but with the end points specified as
+               logarithms.
+    Examples
+    --------
+    >>> np.linspace(2.0, 3.0, num=5)
+    array([2.  , 2.25, 2.5 , 2.75, 3.  ])
+    >>> np.linspace(2.0, 3.0, num=5, endpoint=False)
+    array([2. ,  2.2,  2.4,  2.6,  2.8])
+    >>> np.linspace(2.0, 3.0, num=5, retstep=True)
+    (array([2.  ,  2.25,  2.5 ,  2.75,  3.  ]), 0.25)
+    Graphical illustration:
+    >>> import matplotlib.pyplot as plt
+    >>> N = 8
+    >>> y = np.zeros(N)
+    >>> x1 = np.linspace(0, 10, N, endpoint=True)
+    >>> x2 = np.linspace(0, 10, N, endpoint=False)
+    >>> plt.plot(x1, y, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> plt.plot(x2, y + 0.5, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> plt.ylim([-0.5, 1])
+    (-0.5, 1)
+    >>> plt.show()
+
     Notes
     -----
-    'start' and 'stop' do not support list, numpy ndarray and mxnet ndarray
-    axis could only be 0
+
+    This function differs to the original `numpy.ones
+    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.linspace.html>`_ in
+    the following aspects:
+    - `start` and `stop` do not support list, numpy ndarray and mxnet ndarray
+    - axis could only be 0
+    - There is an additional `ctx` argument to specify the device, e.g. the i-th
+      GPU.
     """
     pass
 
