@@ -95,7 +95,7 @@ Example::
 .set_attr<nnvm::FGradient>("FGradient", ElemwiseGradUseNone{"negative"});
 
 // reciprocal
-MXNET_OPERATOR_REGISTER_NUMPY_UNARY(_np_reciprocal, "x", mshadow_op::reciprocal)
+MXNET_OPERATOR_REGISTER_NUMPY_UNARY(_npi_reciprocal, "x", mshadow_op::reciprocal)
 .describe(R"code(Return the reciprocal of the argument, element-wise.
 Example::
     reciprocal([-2, 1, 3, 1.6, 0.2]) = [-0.5, 1.0, 0.33333334, 0.625, 5.0]

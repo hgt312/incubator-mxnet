@@ -348,13 +348,13 @@ def _np_reciprocal(x, out=None, **kwargs):
 
     `ctx` argument is not supported now.
 
-    This function differs to the original `numpy.ones
+    This function differs to the original `numpy.reciprocal
     <https://docs.scipy.org/doc/numpy/reference/generated/numpy.reciprocal.html>`_ in
     the following aspects:
     - Only support ndarray now.
     - `where` argument is not supported.
     """
-    return _mx_nd_np.reciprocal(x, out=out, **kwargs)
+    pass
 
 
 def _np_square(x, out=None, **kwargs):
@@ -394,11 +394,11 @@ def _np_square(x, out=None, **kwargs):
 
     `ctx` argument is not supported now.
 
-    This function differs to the original `numpy.ones
-    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.reciprocal.html>`_ in
+    This function differs to the original `numpy.square
+    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.square.html>`_ in
     the following aspects:
     - Only support ndarray now.
     - `where` argument is not supported.
     - `dtype` argument is not supported.
     """
-    return _mx_nd_np.square(x, out=out, **kwargs)
+    pass

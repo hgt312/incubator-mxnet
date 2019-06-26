@@ -2062,7 +2062,7 @@ def reciprocal(x, out=None, **kwargs):
     always zero because of the way Python handles integer division.  For
     integer zero the result is an overflow.
 
-    This function differs to the original `numpy.ones
+    This function differs to the original `numpy.reciprocal
     <https://docs.scipy.org/doc/numpy/reference/generated/numpy.reciprocal.html>`_ in
     the following aspects:
     - Only support ndarray now.
@@ -2111,8 +2111,8 @@ def square(x, out=None, **kwargs):
 
     `ctx` argument is not supported now.
 
-    This function differs to the original `numpy.ones
-    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.reciprocal.html>`_ in
+    This function differs to the original `numpy.square
+    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.square.html>`_ in
     the following aspects:
     - Only support ndarray now.
     - `where` argument is not supported.

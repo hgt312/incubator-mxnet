@@ -31,7 +31,8 @@ from . import _internal as _npi
 
 __all__ = ['zeros', 'ones', 'maximum', 'minimum', 'stack', 'concatenate', 'arange', 'argmax',
            'clip', 'add', 'subtract', 'multiply', 'divide', 'mod', 'power', 'split', 'swapaxes',
-           'expand_dims', 'tile', 'linspace', 'sin', 'cos', 'sinh', 'cosh', 'log10', 'sqrt']
+           'expand_dims', 'tile', 'linspace', 'sin', 'cos', 'sinh', 'cosh', 'log10', 'sqrt', 
+           'reciprocal']
 
 
 def _num_outputs(sym):
@@ -1554,5 +1555,51 @@ def sqrt(x, out=None, **kwargs):
     """
     return _unary_func_helper(x, _npi.sqrt, _np.sqrt, out=out, **kwargs)
 
+
+@set_module('mxnet.symbol.numpy')
+def reciprocal(x, out=None, **kwargs):
+    """
+    reciprocal(x, out=None, dtype=None, ctx=None)
+
+    Return the reciprocal of the argument, element-wise.
+    Calculates ``1/x``.
+
+    Parameters
+    ----------
+    x : _Symbol
+    out : _Symbol, or None, optional
+        Dummy parameter to keep the consistency with the ndarray counterpart.
+    
+    Returns
+    -------
+    y : _Symbol
+        Return array.
+    
+
+    Examples
+    --------
+    >>> np.reciprocal(2.)
+    0.5
+    >>> np.reciprocal([1, 2., 3.33])
+    array([ 1.       ,  0.5      ,  0.3003003])
+
+    Notes
+    -----
+
+    .. note::
+        This function is not designed to work with integers.
+    For integer arguments with absolute value larger than 1 the result is
+    always zero because of the way Python handles integer division.  For
+    integer zero the result is an overflow.
+
+    This function differs to the original `numpy.reciprocal
+    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.reciprocal.html>`_ in
+    the following aspects:
+    - Only support ndarray now.
+    - `where` argument is not supported.
+    - There is an additional `ctx` argument to specify the device, e.g. the i-th
+      GPU.
+    """
+    return _unary_func_helper(x, _npi.reciprocal, _np.reciprocal, out=out, **kwargs)
 
 _set_np_symbol_class(_Symbol)

@@ -41,7 +41,7 @@ NNVM_REGISTER_OP(__name$)                                               \
 
 MXNET_OPERATOR_REGISTER_NUMPY_UNARY_GPU(_np_negative, mshadow_op::negation);
 
-MXNET_OPERATOR_REGISTER_NUMPY_UNARY_GPU(_np_reciprocal, mshadow_op::reciprocal);
+MXNET_OPERATOR_REGISTER_NUMPY_UNARY_GPU(_npi_reciprocal, mshadow_op::reciprocal);
 
 MXNET_OPERATOR_REGISTER_NUMPY_UNARY_GPU(_np_absolute, mshadow_op::abs);
 
