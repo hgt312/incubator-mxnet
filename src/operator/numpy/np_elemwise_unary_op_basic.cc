@@ -167,7 +167,7 @@ Example::
 .set_attr<nnvm::FGradient>("FGradient", MakeZeroGradNodes);
 
 // square
-MXNET_OPERATOR_REGISTER_NUMPY_UNARY(_np_square, "x", mshadow_op::square)
+MXNET_OPERATOR_REGISTER_NUMPY_UNARY(_npi_square, "x", mshadow_op::square)
 .describe(R"code(Return the element-wise square of the input.
 Example::
    square([2, 3, 4]) = [4, 9, 16]

@@ -32,7 +32,7 @@ from . import _internal as _npi
 __all__ = ['zeros', 'ones', 'maximum', 'minimum', 'stack', 'concatenate', 'arange', 'argmax',
            'clip', 'add', 'subtract', 'multiply', 'divide', 'mod', 'power', 'split', 'swapaxes',
            'expand_dims', 'tile', 'linspace', 'sin', 'cos', 'sinh', 'cosh', 'log10', 'sqrt', 
-           'reciprocal']
+           'reciprocal', 'square']
 
 
 def _num_outputs(sym):
@@ -1601,5 +1601,51 @@ def reciprocal(x, out=None, **kwargs):
       GPU.
     """
     return _unary_func_helper(x, _npi.reciprocal, _np.reciprocal, out=out, **kwargs)
+
+
+@set_module('mxnet.symbol.numpy')
+def square(x, out=None, **kwargs):
+    """
+    square(x, out=None, **kwargs)
+
+    Return the element-wise square of the input.
+
+    Parameters
+    ----------
+    x : _Symbol
+    out : _Symbol, or None, optional
+        Dummy parameter to keep the consistency with the ndarray counterpart.
+    
+    Returns
+    -------
+    y : _Symbol
+        Return array.
+    
+
+    See Also
+    --------
+    numpy.linalg.matrix_power
+    sqrt
+    power
+
+    Examples
+    --------
+    >>> np.square([-1j, 1])
+    array([-1.-0.j,  1.+0.j])
+
+    Notes
+    -----
+
+    `ctx` argument is not supported now.
+
+    This function differs to the original `numpy.square
+    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.square.html>`_ in
+    the following aspects:
+    - Only support ndarray now.
+    - `where` argument is not supported.
+    - `dtype` argument is not supported.
+    """
+    return _unary_func_helper(x, _npi.square, _np.square, out=out, **kwargs)
+
 
 _set_np_symbol_class(_Symbol)

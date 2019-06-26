@@ -28,7 +28,7 @@ from ..ndarray import NDArray
 __all__ = ['zeros', 'ones', 'maximum', 'minimum', 'stack', 'arange', 'argmax',
            'add', 'subtract', 'multiply', 'divide', 'mod', 'power', 'concatenate',
            'clip', 'split', 'swapaxes', 'expand_dims', 'tile', 'linspace',
-           'sin', 'cos', 'sinh', 'cosh', 'log10', 'sqrt', 'reciprocal']
+           'sin', 'cos', 'sinh', 'cosh', 'log10', 'sqrt', 'reciprocal', 'square']
 
 
 @set_module('mxnet.ndarray.numpy')
@@ -980,4 +980,4 @@ def square(x, out=None, **kwargs):
     - `where` argument is not supported.
     - `dtype` argument is not supported.
     """
-    return _unary_func_helper(x, _np.square, _np.square, out=out, **kwargs)
+    return _unary_func_helper(x, _npi.square, _np.square, out=out, **kwargs)
