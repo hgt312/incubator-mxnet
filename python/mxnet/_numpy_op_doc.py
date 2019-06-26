@@ -203,7 +203,7 @@ def _npi_linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     Notes
     -----
-    'start' and 'stop' do not support list and numpy array
+    'start' and 'stop' do not support list, numpy ndarray and mxnet ndarray
     axis could only be 0
     """
     pass
@@ -241,3 +241,39 @@ def _np_cumsum(a, axis=None, dtype=None, out=None):
         `axis` is not None or `a` is a 1-d array.
     """
     pass
+
+
+def reciprocal(x, out=None, **kwargs):
+    """
+    Return the reciprocal of the argument, element-wise.
+    Calculates ``1/x``.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If provided, it must have 
+        a shape that the inputs broadcast to. If not provided or None, 
+        a freshly-allocated array is returned. A tuple 
+        (possible only as a keyword argument) must have length equal to 
+        the number of outputs.
+    
+    Returns
+    -------
+    y : ndarray
+        Return array. This is a scalar if x is a scalar.
+    
+    Notes
+    -----
+    .. note::
+        This function is not designed to work with integers.
+    For integer arguments with absolute value larger than 1 the result is
+    always zero because of the way Python handles integer division.  For
+    integer zero the result is an overflow.
+
+    Notes
+    -----
+    Only support ndarray now.
+    """
+    return _mx_nd_np.reciprocal(x, out=out, **kwargs)

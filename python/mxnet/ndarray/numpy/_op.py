@@ -28,7 +28,7 @@ from ..ndarray import NDArray
 __all__ = ['zeros', 'ones', 'maximum', 'minimum', 'stack', 'arange', 'argmax',
            'add', 'subtract', 'multiply', 'divide', 'mod', 'power', 'concatenate',
            'clip', 'split', 'swapaxes', 'expand_dims', 'tile', 'linspace',
-           'sin', 'cos', 'sinh', 'cosh', 'log10', 'sqrt']
+           'sin', 'cos', 'sinh', 'cosh', 'log10', 'sqrt', 'reciprocal']
 
 
 @set_module('mxnet.ndarray.numpy')
@@ -676,8 +676,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
 
     Notes
     -----
-    This function currently does not support ``start`` and ``stop`` as ndarrays and
-    axis could only be 0 now.
+    'start' and 'stop' do not support list, numpy ndarray and mxnet ndarray
+    axis could only be 0
     """
     if isinstance(start, (list, _np.ndarray, NDArray)) or \
        isinstance(stop, (list, _np.ndarray, NDArray)):
@@ -882,3 +882,40 @@ def sqrt(x, out=None, **kwargs):
     This function only supports input type of float.
     """
     return _unary_func_helper(x, _npi.sqrt, _np.sqrt, out=out, **kwargs)
+
+
+@set_module('mxnet.ndarray.numpy')
+def reciprocal(x, out=None, **kwargs):
+    """
+    Return the reciprocal of the argument, element-wise.
+    Calculates ``1/x``.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If provided, it must have 
+        a shape that the inputs broadcast to. If not provided or None, 
+        a freshly-allocated array is returned. A tuple 
+        (possible only as a keyword argument) must have length equal to 
+        the number of outputs.
+    
+    Returns
+    -------
+    y : ndarray
+        Return array. This is a scalar if x is a scalar.
+    
+    Notes
+    -----
+    .. note::
+        This function is not designed to work with integers.
+    For integer arguments with absolute value larger than 1 the result is
+    always zero because of the way Python handles integer division.  For
+    integer zero the result is an overflow.
+
+    Notes
+    -----
+    Only support ndarray now.
+    """
+    return _unary_func_helper(x, _np.reciprocal, _np.reciprocal, out=out, **kwargs)
