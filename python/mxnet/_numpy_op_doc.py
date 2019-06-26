@@ -75,7 +75,7 @@ def _np_zeros_like(a, dtype=None, **kwargs):
     """
     zeros_like(a, dtype=None, order='C', subok=True)
 
-    Return an array of zeros with the same shape as a given array.
+    Return an array of zeros with the same shape and type as a given array.
 
     Parameters
     ----------
@@ -88,13 +88,11 @@ def _np_zeros_like(a, dtype=None, **kwargs):
     order : {'C'}, optional, default: C
         Store multi-dimensional data in row-major
         (C-style) in memory. Note that the column-major is not supported yet.
-    ctx : Context, optional
-        An optional device context (default is the current default context).
     
     Returns
     -------
     out : ndarray
-        Array of zeros with the same shape as `a`.
+        Array of zeros with the same shape and type as `a`.
 
 
     See Also
@@ -122,14 +120,13 @@ def _np_zeros_like(a, dtype=None, **kwargs):
 
     Notes
     -----
+    `ctx` argument is not supported now.
 
     This function differs to the original `numpy.ones
     <https://docs.scipy.org/doc/numpy/reference/generated/numpy.zeros_like.html>`_ in
     the following aspects:
     - The parameter `dtype` and `subok` are not supported now.
     - Only row-major is supported.
-    - There is an additional `ctx` argument to specify the device, e.g. the i-th
-      GPU.
     """
     pass
 
@@ -188,7 +185,10 @@ def _npi_multinomial(a):
 
 
 def _npi_linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0, **kwargs):
-    """Return evenly spaced numbers over a specified interval.
+    """
+    linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0, ctx=None)
+    
+    Return evenly spaced numbers over a specified interval.
 
     Returns num evenly spaced samples, calculated over the interval [start, stop].
     The endpoint of the interval can optionally be excluded.
@@ -236,6 +236,7 @@ def _npi_linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
                 scale (a geometric progression).
     logspace : Similar to `geomspace`, but with the end points specified as
                logarithms.
+
     Examples
     --------
     >>> np.linspace(2.0, 3.0, num=5)
@@ -308,13 +309,14 @@ def _np_cumsum(a, axis=None, dtype=None, out=None):
 
 def reciprocal(x, out=None, **kwargs):
     """
+    reciprocal(x, out=None, dtype=None)
+
     Return the reciprocal of the argument, element-wise.
     Calculates ``1/x``.
 
     Parameters
     ----------
-    x : array_like
-        Input array.
+    x : ndarray
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If provided, it must have 
         a shape that the inputs broadcast to. If not provided or None, 
@@ -325,18 +327,31 @@ def reciprocal(x, out=None, **kwargs):
     Returns
     -------
     y : ndarray
-        Return array. This is a scalar if x is a scalar.
+        Return array.
     
+
+    Examples
+    --------
+    >>> np.reciprocal(2.)
+    0.5
+    >>> np.reciprocal([1, 2., 3.33])
+    array([ 1.       ,  0.5      ,  0.3003003])
+
     Notes
     -----
+
     .. note::
         This function is not designed to work with integers.
     For integer arguments with absolute value larger than 1 the result is
     always zero because of the way Python handles integer division.  For
     integer zero the result is an overflow.
 
-    Notes
-    -----
-    Only support ndarray now.
+    `ctx` argument is not supported now.
+
+    This function differs to the original `numpy.ones
+    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.reciprocal.html>`_ in
+    the following aspects:
+    - Only support ndarray now.
+    - `where` argument is not supported.
     """
     return _mx_nd_np.reciprocal(x, out=out, **kwargs)
