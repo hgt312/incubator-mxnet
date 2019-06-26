@@ -279,7 +279,7 @@ MXNET_OPERATOR_REGISTER_NUMPY_UNARY(_np_tan, "x", mshadow_op::tan)
 .set_attr<nnvm::FGradient>("FGradient", ElemwiseGradUseOut{ "_backward_tan" });
 
 // arcsin
-MXNET_OPERATOR_REGISTER_NUMPY_UNARY(_np_arcsin, "x", mshadow_op::arcsin)
+MXNET_OPERATOR_REGISTER_NUMPY_UNARY(_npi_arcsin, "x", mshadow_op::arcsin)
 .describe(R"code(Returns element-wise inverse sine of the input array.
 .. math::
    arcsin([-1, -.707, 0, .707, 1]) = [-\pi/2, -\pi/4, 0, \pi/4, \pi/2]

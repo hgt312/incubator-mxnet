@@ -32,7 +32,7 @@ from . import _internal as _npi
 __all__ = ['zeros', 'ones', 'maximum', 'minimum', 'stack', 'concatenate', 'arange', 'argmax',
            'clip', 'add', 'subtract', 'multiply', 'divide', 'mod', 'power', 'split', 'swapaxes',
            'expand_dims', 'tile', 'linspace', 'sin', 'cos', 'sinh', 'cosh', 'log10', 'sqrt', 
-           'reciprocal', 'square']
+           'reciprocal', 'square', 'arcsin']
 
 
 def _num_outputs(sym):
@@ -1644,8 +1644,74 @@ def square(x, out=None, **kwargs):
     - Only support ndarray now.
     - `where` argument is not supported.
     - `dtype` argument is not supported.
+    - Complex input is not supported.
     """
     return _unary_func_helper(x, _npi.square, _np.square, out=out, **kwargs)
+
+
+@set_module('mxnet.symbol.numpy')
+def arcsin(x, out=None, **kwargs):
+    """
+    arcsin(x, out=None, **kwargs)
+
+    Inverse sine, element-wise.
+
+    x : _Symbol
+    out : _Symbol, or None, optional
+        Dummy parameter to keep the consistency with the ndarray counterpart.
+    
+    Returns
+    -------
+    angle : _Symbol
+        Return array.
+    
+
+    See Also
+    --------
+    sin, cos, arccos, tan, arctan, arctan2, emath.arcsin
+
+    Examples
+    --------
+    >>> np.arcsin(1)     # pi/2
+    1.5707963267948966
+    >>> np.arcsin(-1)    # -pi/2
+    -1.5707963267948966
+    >>> np.arcsin(0)
+    0.0
+
+    Notes
+    -----
+
+    `arcsin` is a multivalued function: for each `x` there are infinitely
+    many numbers `z` such that :math:`sin(z) = x`.  The convention is to
+    return the angle `z` whose real part lies in [-pi/2, pi/2].
+
+    For real-valued input data types, *arcsin* always returns real output.
+    For each value that cannot be expressed as a real number or infinity,
+    it yields ``nan`` and sets the `invalid` floating point error flag.
+
+    For complex-valued input, `arcsin` is a complex analytic function that
+    has, by convention, the branch cuts [-inf, -1] and [1, inf]  and is
+    continuous from above on the former and from below on the latter.
+
+    The inverse sine is also known as `asin` or sin^{-1}.
+
+    `ctx` argument is not supported now.
+
+    This function differs to the original `numpy.arcsin
+    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.arcsin.html>`_ in
+    the following aspects:
+    - Only support ndarray now.
+    - `where` argument is not supported.
+    - `dtype` argument is not supported.
+
+    References
+    ----------
+    Abramowitz, M. and Stegun, I. A., *Handbook of Mathematical Functions*,
+    10th printing, New York: Dover, 1964, pp. 79ff.
+    http://www.math.sfu.ca/~cbm/aands/
+    """
+    return _unary_func_helper(x, _npi.arcsin, _np.arcsin, out=out, **kwargs)
 
 
 _set_np_symbol_class(_Symbol)

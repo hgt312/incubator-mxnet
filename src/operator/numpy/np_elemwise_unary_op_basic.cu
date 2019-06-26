@@ -84,7 +84,7 @@ MXNET_OPERATOR_REGISTER_NUMPY_UNARY_GPU(_npi_cos, mshadow_op::cos);
 
 MXNET_OPERATOR_REGISTER_NUMPY_UNARY_GPU(_np_tan, mshadow_op::tan);
 
-MXNET_OPERATOR_REGISTER_NUMPY_UNARY_GPU(_np_arcsin, mshadow_op::arcsin);
+MXNET_OPERATOR_REGISTER_NUMPY_UNARY_GPU(_npi_arcsin, mshadow_op::arcsin);
 
 MXNET_OPERATOR_REGISTER_NUMPY_UNARY_GPU(_np_arccos, mshadow_op::arccos);
 
