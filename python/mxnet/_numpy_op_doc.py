@@ -307,7 +307,7 @@ def _np_cumsum(a, axis=None, dtype=None, out=None):
     pass
 
 
-def reciprocal(x, out=None, **kwargs):
+def _np_reciprocal(x, out=None, **kwargs):
     """
     reciprocal(x, out=None, dtype=None)
 
@@ -355,3 +355,50 @@ def reciprocal(x, out=None, **kwargs):
     - `where` argument is not supported.
     """
     return _mx_nd_np.reciprocal(x, out=out, **kwargs)
+
+
+def _np_square(x, out=None, **kwargs):
+    """
+    square(x, out=None, **kwargs)
+
+    Return the element-wise square of the input.
+
+    Parameters
+    ----------
+    x : ndarray
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If provided, it must have
+        a shape that the inputs broadcast to. If not provided or `None`,
+        a freshly-allocated array is returned. A tuple (possible only as a
+        keyword argument) must have length equal to the number of outputs.
+    
+    Returns
+    -------
+    y : ndarray
+        Return array.
+    
+
+    See Also
+    --------
+    numpy.linalg.matrix_power
+    sqrt
+    power
+
+    Examples
+    --------
+    >>> np.square([-1j, 1])
+    array([-1.-0.j,  1.+0.j])
+
+    Notes
+    -----
+
+    `ctx` argument is not supported now.
+
+    This function differs to the original `numpy.ones
+    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.reciprocal.html>`_ in
+    the following aspects:
+    - Only support ndarray now.
+    - `where` argument is not supported.
+    - `dtype` argument is not supported.
+    """
+    return _mx_nd_np.square(x, out=out, **kwargs)

@@ -46,7 +46,7 @@ from ..ndarray.numpy import _internal as _npi
 __all__ = ['ndarray', 'empty', 'array', 'zeros', 'ones', 'maximum', 'minimum', 'stack', 'arange',
            'argmax', 'add', 'subtract', 'multiply', 'divide', 'mod', 'power', 'concatenate',
            'clip', 'split', 'swapaxes', 'expand_dims', 'tile', 'linspace', 'sin', 'cos',
-           'sinh', 'cosh', 'log10', 'sqrt', 'reciprocal']
+           'sinh', 'cosh', 'log10', 'sqrt', 'reciprocal', 'square']
 
 
 # This function is copied from ndarray.py since pylint
@@ -2025,13 +2025,14 @@ def sqrt(x, out=None, **kwargs):
 @set_module('mxnet.numpy')
 def reciprocal(x, out=None, **kwargs):
     """
+    reciprocal(x, out=None, dtype=None, ctx=None)
+
     Return the reciprocal of the argument, element-wise.
     Calculates ``1/x``.
 
     Parameters
     ----------
-    x : array_like
-        Input array.
+    x : ndarray
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If provided, it must have 
         a shape that the inputs broadcast to. If not provided or None, 
@@ -2042,18 +2043,79 @@ def reciprocal(x, out=None, **kwargs):
     Returns
     -------
     y : ndarray
-        Return array. This is a scalar if x is a scalar.
+        Return array.
     
+
+    Examples
+    --------
+    >>> np.reciprocal(2.)
+    0.5
+    >>> np.reciprocal([1, 2., 3.33])
+    array([ 1.       ,  0.5      ,  0.3003003])
+
     Notes
     -----
+
     .. note::
         This function is not designed to work with integers.
     For integer arguments with absolute value larger than 1 the result is
     always zero because of the way Python handles integer division.  For
     integer zero the result is an overflow.
 
-    Notes
-    -----
-    Only support ndarray now.
+    This function differs to the original `numpy.ones
+    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.reciprocal.html>`_ in
+    the following aspects:
+    - Only support ndarray now.
+    - `where` argument is not supported.
+    - There is an additional `ctx` argument to specify the device, e.g. the i-th
+      GPU.
     """
     return _mx_nd_np.reciprocal(x, out=out, **kwargs)
+
+
+@set_module('mxnet.numpy')
+def square(x, out=None, **kwargs):
+    """
+    square(x, out=None, **kwargs)
+
+    Return the element-wise square of the input.
+
+    Parameters
+    ----------
+    x : ndarray
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If provided, it must have
+        a shape that the inputs broadcast to. If not provided or `None`,
+        a freshly-allocated array is returned. A tuple (possible only as a
+        keyword argument) must have length equal to the number of outputs.
+    
+    Returns
+    -------
+    y : ndarray
+        Return array.
+    
+
+    See Also
+    --------
+    numpy.linalg.matrix_power
+    sqrt
+    power
+
+    Examples
+    --------
+    >>> np.square([-1j, 1])
+    array([-1.-0.j,  1.+0.j])
+
+    Notes
+    -----
+
+    `ctx` argument is not supported now.
+
+    This function differs to the original `numpy.ones
+    <https://docs.scipy.org/doc/numpy/reference/generated/numpy.reciprocal.html>`_ in
+    the following aspects:
+    - Only support ndarray now.
+    - `where` argument is not supported.
+    - `dtype` argument is not supported.
+    """
+    return _mx_nd_np.square(x, out=out, **kwargs)
