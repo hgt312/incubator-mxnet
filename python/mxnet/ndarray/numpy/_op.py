@@ -33,7 +33,7 @@ __all__ = ['zeros', 'ones', 'maximum', 'minimum', 'stack', 'arange', 'argmax',
            'clip', 'split', 'swapaxes', 'expand_dims', 'tile', 'linspace', 'eye',
            'sin', 'cos', 'sinh', 'cosh', 'log10', 'sqrt', 'abs', 'exp', 'arctan', 'sign', 'log',
            'degrees', 'log2', 'rint', 'radians', 'mean', 'reciprocal', 'square', 'arcsin',
-           'argsort', 'hstack', 'tensordot']
+           'argsort', 'hstack', 'tensordot', 'unique']
 
 
 @set_module('mxnet.ndarray.numpy')
@@ -563,6 +563,11 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     if order is not None:
         raise AttributeError('mxnet.numpy.argsort does not support sorting with fields ordering')
     return _npi.argsort(a, axis)
+
+
+@set_module('mxnet.ndarray.numpy')
+def unique(ar, return_index, return_inverse, return_counts, axis):
+    return _npi.unique(ar, return_index, return_inverse, return_counts, axis)
 
 
 @set_module('mxnet.ndarray.numpy')
