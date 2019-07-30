@@ -34,9 +34,38 @@
 #include "../operator_common.h"
 #include "../mshadow_op.h"
 #include "../contrib/boolean_mask-inl.h"
+#ifdef __CUDACC__
+#include <cub/cub.cuh>
+#include <thrust/device_ptr.h>
+#include <thrust/sort.h>
+#endif
 
 namespace mxnet {
 namespace op {
+
+struct UniqueComputeAuxGPUKernel {
+  // assume that idx have been flattened to a 1-D tensor (N,)
+  // assume that out_data and in_data have been flattened to 2-D tensors, (N, M) and (K, M)
+  // M is the number of columns of in_data and out_data
+  // i is the index of out_data
+  template<typename DType>
+  MSHADOW_XINLINE static void Map(int i, DType* out_data, const DType* in_data,
+                                  const int64_t* idx, const int64_t M) {
+    int64_t j = idx[i/M];
+    out_data[i] = in_data[j * M + i % M];
+  }
+};
+
+struct UniqueComputeMaskKernel {
+  template<typename DType>
+  MSHADOW_XINLINE static void Map(int i, int64_t* out_data, const DType* in_data) {
+    if (i == 0) {
+      out_data[i] = 1;
+    } else {
+      out_data[i] = (in_data[i] == in_data[i - 1]) ? 0 : 1;
+    }
+  }
+};
 
 struct NumpyUniqueParam : public dmlc::Parameter<NumpyUniqueParam> {
   bool return_index, return_inverse, return_counts;
@@ -185,7 +214,6 @@ void NumpyUniqueCPUImpl(const NumpyUniqueParam& param,
   MSHADOW_TYPE_SWITCH(outputs[0].dtype(), DType, {
     using namespace mshadow;
     using namespace mshadow::expr;
-
     Stream<cpu> *stream = ctx.get_stream<cpu>();
     const index_t actual_axis =
         param.axis.value() + ((param.axis.value() < 0) ? inputs[0].shape().ndim() : 0);
@@ -291,6 +319,87 @@ void NumpyUniqueCPUImpl(const NumpyUniqueParam& param,
     }
   });
 }
+
+
+#ifdef __CUDACC__
+void NumpyUniqueGPUNoneAxisImpl(const NumpyUniqueParam& param,
+                          const OpContext &ctx,
+                          const std::vector<NDArray> &inputs,
+                          const std::vector<OpReqType> &req,
+                          const std::vector<NDArray> &outputs) {
+  MSHADOW_TYPE_SWITCH(outputs[0].dtype(), DType, {
+    using namespace mshadow;
+    mshadow::Stream<gpu> *stream = ctx.get_stream<gpu>();
+    DType* input_data = inputs[0].data().dptr<DType>();
+    dim_t input_size = inputs[0].shape().Size();
+    // allocate workspace [perm, aux, mask]
+    size_t workspace_size = 0;
+    workspace_size += sizeof(int64_t) * input_size;
+    workspace_size += sizeof(DType) * input_size;
+    workspace_size += sizeof(int64_t) * input_size;
+    workspace_size += sizeof(int32_t) * input_size;
+    Tensor<gpu, 1, char> workspace =
+        ctx.requested[0].get_space_typed<gpu, 1, DType>(Shape1(workspace_size), stream);
+    char* workspace_curr_ptr = workspace.dptr_;
+    // argsort, result in perm
+    Tensor<gpu, 1, int64_t> perm(reinterpret_cast<int64_t*>(workspace_curr_ptr),
+        Shape1(input_size), stream);
+    mxnet_op::Kernel<range_fwd, gpu>::Launch(stream, input_size, 1, 0, 1, kWriteTo, perm.dptr_);
+    thrust::device_ptr<int64_t> key_iter = thrust::device_pointer_cast(perm.dptr_);
+    thrust::device_ptr<DType> value_iter = thrust::device_pointer_cast(input_data);
+    thrust::stable_sort_by_key(
+      thrust::cuda::par.on(stream),
+      key_iter, key_iter + input_size, value_iter, thrust::less<DType>());
+    // sorted data in aux
+    workspace_curr_ptr += sizeof(int64_t) * input_size;
+    Tensor<gpu, 1, DType> aux(reinterpret_cast<DType*>(workspace_curr_ptr),
+        Shape1(input_size), stream);
+    mxnet_op::Kernel<UniqueComputeAuxGPUKernel, gpu>::Launch(
+        stream, input_size, aux.dptr_, input_data, perm.dptr_, 1);
+    // calculate unique mask
+    workspace_curr_ptr += sizeof(DType) * input_size;
+    Tensor<gpu, 1, int64_t> mask(reinterpret_cast<int64_t*>(workspace_curr_ptr),
+        Shape1(input_size), stream);
+    mxnet_op::Kernel<UniqueComputeMaskKernel, gpu>::Launch(
+        stream, input_size, mask.dptr_, aux.dptr_);
+    // calculate prefix sum
+      // count the number of 1s in `idx`, so that we could know the output dimension
+      int32_t valid_num = 0;
+      int32_t* prefix_sum = nullptr;
+      void* d_temp_storage = nullptr;
+      size_t temp_storage_bytes = 0;
+      // Calculate total temporary memory size
+      cub::DeviceScan::InclusiveSum(d_temp_storage,
+                                    temp_storage_bytes,
+                                    prefix_sum,
+                                    prefix_sum,
+                                    input_size,
+                                    Stream<gpu>::GetStream(stream));
+      size_t buffer_size = input_size * sizeof(int32_t);
+      temp_storage_bytes += buffer_size;
+      workspace_curr_ptr += sizeof(int64_t) * input_size;
+      prefix_sum = reinterpret_cast<int32_t*>(workspace_curr_ptr);
+      d_temp_storage = workspace_curr_ptr + buffer_size;
+      mxnet_op::Kernel<mshadow_op::identity_with_cast, gpu>::Launch(
+        stream, input_size, prefix_sum, mask.dptr_);
+      // Calculate prefix sum
+      cub::DeviceScan::InclusiveSum(d_temp_storage,
+                                    temp_storage_bytes,
+                                    prefix_sum,
+                                    prefix_sum,
+                                    input_size,
+                                    Stream<gpu>::GetStream(stream));
+      CUDA_CALL(cudaMemcpy(&valid_num, &prefix_sum[input_size - 1], sizeof(int32_t),
+                          cudaMemcpyDeviceToHost));
+      // Set the output shape forcefully
+      const_cast<NDArray &>(out).Init(mxnet::TShape(1, valid_num));
+      // Do the copy
+      mxnet_op::Kernel<BooleanMaskForwardCPUKernel, cpu>::Launch(
+        stream, input_size, outputs[0].data().dptr<DType>(), aux.dptr_,
+        prefix_sum, 1);
+  });
+}
+#endif
 
 template<typename xpu>
 void NumpyUniqueForward(const nnvm::NodeAttrs& attrs,
