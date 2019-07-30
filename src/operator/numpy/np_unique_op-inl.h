@@ -37,6 +37,9 @@
 #ifdef __CUDACC__
 #include <cub/cub.cuh>
 #include <thrust/device_ptr.h>
+#include <thrust/device_vector.h>
+#include <thrust/scan.h>
+#include <thrust/sequence.h>
 #include <thrust/sort.h>
 #endif
 
@@ -328,75 +331,76 @@ void NumpyUniqueGPUNoneAxisImpl(const NumpyUniqueParam& param,
                           const std::vector<OpReqType> &req,
                           const std::vector<NDArray> &outputs) {
   MSHADOW_TYPE_SWITCH(outputs[0].dtype(), DType, {
-    using namespace mshadow;
     mshadow::Stream<gpu> *stream = ctx.get_stream<gpu>();
+
     DType* input_data = inputs[0].data().dptr<DType>();
     dim_t input_size = inputs[0].shape().Size();
-    // allocate workspace [perm, aux, mask]
-    size_t workspace_size = 0;
-    workspace_size += sizeof(int64_t) * input_size;
-    workspace_size += sizeof(DType) * input_size;
-    workspace_size += sizeof(int64_t) * input_size;
-    workspace_size += sizeof(int32_t) * input_size;
-    Tensor<gpu, 1, char> workspace =
-        ctx.requested[0].get_space_typed<gpu, 1, DType>(Shape1(workspace_size), stream);
-    char* workspace_curr_ptr = workspace.dptr_;
     // argsort, result in perm
-    Tensor<gpu, 1, int64_t> perm(reinterpret_cast<int64_t*>(workspace_curr_ptr),
-        Shape1(input_size), stream);
-    mxnet_op::Kernel<range_fwd, gpu>::Launch(stream, input_size, 1, 0, 1, kWriteTo, perm.dptr_);
-    thrust::device_ptr<int64_t> key_iter = thrust::device_pointer_cast(perm.dptr_);
-    thrust::device_ptr<DType> value_iter = thrust::device_pointer_cast(input_data);
-    thrust::stable_sort_by_key(
-      thrust::cuda::par.on(stream),
-      key_iter, key_iter + input_size, value_iter, thrust::less<DType>());
+    thrust::device_vector<dim_t> perm(input_size);
+    thrust::sequence(perm.begin(), perm.end());
+    thrust::stable_sort(perm.begin(), perm.end(), [&input_data](size_t i1, size_t i2) {return input_data[i1] < input_data[i2];});
     // sorted data in aux
-    workspace_curr_ptr += sizeof(int64_t) * input_size;
-    Tensor<gpu, 1, DType> aux(reinterpret_cast<DType*>(workspace_curr_ptr),
-        Shape1(input_size), stream);
-    mxnet_op::Kernel<UniqueComputeAuxGPUKernel, gpu>::Launch(
-        stream, input_size, aux.dptr_, input_data, perm.dptr_, 1);
+    thrust::device_vector<DType> aux(input_size);
+    for (size_t i = 0; i < input_size; ++i) {
+      aux[i] = input_data[perm[i]];
+    }
     // calculate unique mask
-    workspace_curr_ptr += sizeof(DType) * input_size;
-    Tensor<gpu, 1, int64_t> mask(reinterpret_cast<int64_t*>(workspace_curr_ptr),
-        Shape1(input_size), stream);
-    mxnet_op::Kernel<UniqueComputeMaskKernel, gpu>::Launch(
-        stream, input_size, mask.dptr_, aux.dptr_);
-    // calculate prefix sum
-      // count the number of 1s in `idx`, so that we could know the output dimension
-      int32_t valid_num = 0;
-      int32_t* prefix_sum = nullptr;
-      void* d_temp_storage = nullptr;
-      size_t temp_storage_bytes = 0;
-      // Calculate total temporary memory size
-      cub::DeviceScan::InclusiveSum(d_temp_storage,
-                                    temp_storage_bytes,
-                                    prefix_sum,
-                                    prefix_sum,
-                                    input_size,
-                                    Stream<gpu>::GetStream(stream));
-      size_t buffer_size = input_size * sizeof(int32_t);
-      temp_storage_bytes += buffer_size;
-      workspace_curr_ptr += sizeof(int64_t) * input_size;
-      prefix_sum = reinterpret_cast<int32_t*>(workspace_curr_ptr);
-      d_temp_storage = workspace_curr_ptr + buffer_size;
-      mxnet_op::Kernel<mshadow_op::identity_with_cast, gpu>::Launch(
-        stream, input_size, prefix_sum, mask.dptr_);
-      // Calculate prefix sum
-      cub::DeviceScan::InclusiveSum(d_temp_storage,
-                                    temp_storage_bytes,
-                                    prefix_sum,
-                                    prefix_sum,
-                                    input_size,
-                                    Stream<gpu>::GetStream(stream));
-      CUDA_CALL(cudaMemcpy(&valid_num, &prefix_sum[input_size - 1], sizeof(int32_t),
-                          cudaMemcpyDeviceToHost));
-      // Set the output shape forcefully
-      const_cast<NDArray &>(out).Init(mxnet::TShape(1, valid_num));
-      // Do the copy
-      mxnet_op::Kernel<BooleanMaskForwardCPUKernel, cpu>::Launch(
-        stream, input_size, outputs[0].data().dptr<DType>(), aux.dptr_,
-        prefix_sum, 1);
+    thrust::device_vector<int32_t> mask(input_size);
+    mask[0] = 1;
+    for (size_t i = 1; i < input_size; ++i) {
+      mask[i] = (aux[i] == aux[i - 1]) ? 0 : 1;
+    }
+    // Calculate prefix sum
+    thrust::device_vector<int32_t> prefix_sum(input_size, 0);
+    thrust::inclusive_scan(mask, mask + input_size, prefix_sum);
+    size_t valid_num = 0;
+    CUDA_CALL(cudaMemcpy(&valid_num, &prefix_sum[input_size - 1], sizeof(int32_t),
+                         cudaMemcpyDeviceToHost));
+    // set the output shape forcefully
+    mxnet::TShape s(1, valid_num);
+    const_cast<NDArray &>(outputs[0]).Init(s);
+    // launch kernal to obtain unique array, reuse boolean_mask kernel
+    mxnet_op::Kernel<BooleanMaskForwardKernel, gpu>::Launch(
+      stream, input_size, outputs[0].data().dptr<DType>(), aux.data(),
+      prefix_sum.data(), 1);
+    // handle other optional outputs
+    int output_flag = 0;
+    if (param.return_index) {
+      output_flag += 1;
+      const_cast<NDArray &>(outputs[output_flag]).Init(s);
+      dim_t* unique_indices = outputs[output_flag].data().dptr<dim_t>();
+      // reuse boolean_mask kernel
+      mxnet_op::Kernel<BooleanMaskForwardKernel, gpu>::Launch(
+        stream, input_size, unique_indices, perm.data(),
+        prefix_sum.data(), 1);
+    }
+    if (param.return_inverse) {
+      output_flag += 1;
+      const_cast<NDArray &>(outputs[output_flag]).Init(mxnet::TShape(1, input_size));
+      dim_t* unique_inverse = outputs[output_flag].data().dptr<dim_t>();
+      // TODO by hgt312, write by kernel
+      for (size_t i = 0; i < input_size; ++i) {
+        unique_inverse[perm[i]] = prefix_sum[i] - 1;
+      }
+    }
+    if (param.return_counts) {
+      output_flag += 1;
+      thrust::device_vector<int32_t> idx(valid_num + 1);
+      auto iter = idx.begin();
+      for (size_t i = 0; i < input_size; ++i) {
+        if (mask[i]) {
+          *iter = i;
+          ++iter;
+        }
+      }
+      *iter = input_size;
+      const_cast<NDArray &>(outputs[output_flag]).Init(s);
+      dim_t* unique_counts = outputs[output_flag].data().dptr<dim_t>();
+      // TODO by hgt312, write by kernel
+      for (size_t i = 0; i < valid_num; ++i) {
+        unique_counts[i] = idx[i + 1] - idx[i];
+      }
+    }
   });
 }
 #endif
