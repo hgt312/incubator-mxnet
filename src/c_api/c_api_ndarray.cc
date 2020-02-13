@@ -29,6 +29,7 @@
 #include <mxnet/operator_util.h>
 #include <mxnet/op_attr_types.h>
 #include <mxnet/imperative.h>
+#include <dmlc/timer.h>
 #include <nnvm/node.h>
 #include <nnvm/op_attr_types.h>
 #include <string>
@@ -98,7 +99,7 @@ void MXImperativeInvokeImpl(AtomicSymbolCreator creator,
 
   nnvm::NodeAttrs attrs = imperative::ParseAttrs(op, num_inputs, num_params,
                                                  param_keys, param_vals);
-
+  double start = dmlc::GetTime();
   int infered_num_outputs;
   int num_visible_outputs;
   imperative::SetNumOutputs(op, attrs, num_inputs, &infered_num_outputs, &num_visible_outputs);
@@ -120,6 +121,8 @@ void MXImperativeInvokeImpl(AtomicSymbolCreator creator,
     for (int i = 0; i < *num_outputs; ++i) ret->ret_handles.push_back(ndoutputs[i]);
     *outputs = reinterpret_cast<NDArrayHandle*>(dmlc::BeginPtr(ret->ret_handles));
   }
+  double elapsed = dmlc::GetTime() - start;
+  LOG(INFO) << elapsed;
 }
 
 int MXImperativeInvoke(AtomicSymbolCreator creator,
