@@ -55,8 +55,13 @@ OpStatePtr Imperative::InvokeOp(
   std::vector<engine::VarHandle> read_vars, write_vars;
   std::vector<Resource> requested;
   std::vector<uint32_t> mutate_idx;
-  SetDependency(attrs, ctx, inputs, outputs,
-      &read_vars, &write_vars, &requested, &mutate_idx, dispatch_mode);
+  static bool is_naive_engine = IsNaiveEngine();
+  if (is_naive_engine) {
+    PrepareResources(attrs, ctx, &requested, &mutate_idx, dispatch_mode);
+  } else {
+    SetDependency(attrs, ctx, inputs, outputs,
+        &read_vars, &write_vars, &requested, &mutate_idx, dispatch_mode);
+  }
 
   FCompute fn = common::GetFCompute<FCompute>(op, "FCompute", ctx);
   FComputeEx fn_ex = common::GetFCompute<FComputeEx>(op, "FComputeEx", ctx);
