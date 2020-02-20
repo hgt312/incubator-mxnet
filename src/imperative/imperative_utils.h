@@ -224,7 +224,7 @@ inline void SetShapeType(const Context& ctx,
   }
 }
 
-inline bool IsNaiveEngine() {
+inline const bool IsNaiveEngine() {
   const char *type = getenv("MXNET_ENGINE_TYPE");
   std::string stype;
   if (type) {
