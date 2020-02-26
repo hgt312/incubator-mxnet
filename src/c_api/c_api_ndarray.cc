@@ -99,20 +99,29 @@ void MXImperativeInvokeImpl(AtomicSymbolCreator creator,
 
   nnvm::NodeAttrs attrs = imperative::ParseAttrs(op, num_inputs, num_params,
                                                  param_keys, param_vals);
-  double start = dmlc::GetTime();
   int infered_num_outputs;
   int num_visible_outputs;
+  double t1s = dmlc::GetTime();
   imperative::SetNumOutputs(op, attrs, num_inputs, &infered_num_outputs, &num_visible_outputs);
+  double t1 = dmlc::GetTime() - t1s;
+  LOG(INFO) << "SetNumOutputs: " << t1;
 
+  double t2s = dmlc::GetTime();
   std::vector<NDArray*> ndinputs, ndoutputs;
   SetNDInputsOutputs(op, &ndinputs, &ndoutputs, num_inputs, inputs,
       num_outputs, infered_num_outputs, num_visible_outputs, outputs);
+  double t2 = dmlc::GetTime() - t2s;
+  LOG(INFO) << "SetNDInputsOutputs: " << t2;
 
+  double t3s = dmlc::GetTime();
   auto state = Imperative::Get()->Invoke(Context::CPU(), attrs, ndinputs, ndoutputs);
   if (Imperative::Get()->is_recording()) {
     Imperative::Get()->RecordOp(std::move(attrs), ndinputs, ndoutputs, state);
   }
+  double t3 = dmlc::GetTime() - t3s;
+  LOG(INFO) << "Invoke: " << t3;
 
+  double t4s = dmlc::GetTime();
   for (int i = *num_outputs; i < infered_num_outputs; ++i) delete ndoutputs[i];
 
   if (*outputs == nullptr) {
@@ -121,8 +130,9 @@ void MXImperativeInvokeImpl(AtomicSymbolCreator creator,
     for (int i = 0; i < *num_outputs; ++i) ret->ret_handles.push_back(ndoutputs[i]);
     *outputs = reinterpret_cast<NDArrayHandle*>(dmlc::BeginPtr(ret->ret_handles));
   }
-  double elapsed = dmlc::GetTime() - start;
-  LOG(INFO) << "Total: " << elapsed;
+  double t4 = dmlc::GetTime() - t4s;
+  LOG(INFO) << "Post process: " << t4;
+  LOG(INFO) << "Total: " << t1 + t2 + t3 + t4;
 }
 
 int MXImperativeInvoke(AtomicSymbolCreator creator,
