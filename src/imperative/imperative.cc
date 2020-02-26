@@ -70,7 +70,7 @@ OpStatePtr Imperative::InvokeOp(
   double t1 = dmlc::GetTime() - t1s;
   LOG(INFO) << "----Before push: " << t1;
 
-  double t2s = dmlc::GetTime();
+  double t2s;
   // FComputeEx is dispatched only when dispatch_mode is DispatchMode::kFComputeEx
   CHECK(dispatch_mode != DispatchMode::kUndefined);
   bool dispatch_fcompex = dispatch_mode == DispatchMode::kFComputeEx;
@@ -78,6 +78,7 @@ OpStatePtr Imperative::InvokeOp(
     PushFComputeEx(fn_ex, op, attrs, ctx, read_vars, write_vars,
         requested, inputs, outputs, req);
   } else if (fn) {
+    t2s = dmlc::GetTime();
     PushFCompute(fn, op, attrs, ctx, read_vars, write_vars,
         requested, inputs, outputs, mutate_idx, req);
   } else if (createop.count(op) || is_layer_backward.get(op, false)) {
