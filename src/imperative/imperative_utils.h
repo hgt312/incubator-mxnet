@@ -480,6 +480,7 @@ inline void PushFCompute(const FCompute& fn,
   DerefInputOutput(p_inputs, p_outputs, &inputs, &outputs);
   Engine::Get()->PushSync(
     [=](RunContext rctx) {
+      double t1s = dmlc::GetTime();
       std::vector<TBlob> input_blobs, output_blobs;
       // pre-fcompute and post-fcompute storage fallback src NDArrays and dst NDArrays
       std::vector<NDArray> pre_temp_src, pre_temp_dst, post_temp_dst, post_temp_src;
@@ -505,6 +506,8 @@ inline void PushFCompute(const FCompute& fn,
       bool is_gpu = ctx.dev_mask() == gpu::kDevMask;
       // pre-fcompute fallback, cast to default storage type
       CastNonDefaultStorage(pre_temp_src, pre_temp_dst, opctx, is_gpu);
+      double t1 = dmlc::GetTime() - t1s;
+      LOG(INFO) << "----Before Fn: " << t1;
       double t3s = dmlc::GetTime();
       fn(attrs, opctx, input_blobs, tmp_req, output_blobs);
       double t3 = dmlc::GetTime() - t3s;
