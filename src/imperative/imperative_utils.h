@@ -480,7 +480,6 @@ inline void PushFCompute(const FCompute& fn,
   DerefInputOutput(p_inputs, p_outputs, &inputs, &outputs);
   Engine::Get()->PushSync(
     [=](RunContext rctx) {
-      double t1s = dmlc::GetTime();
       std::vector<TBlob> input_blobs, output_blobs;
       // pre-fcompute and post-fcompute storage fallback src NDArrays and dst NDArrays
       std::vector<NDArray> pre_temp_src, pre_temp_dst, post_temp_dst, post_temp_src;
@@ -501,25 +500,17 @@ inline void PushFCompute(const FCompute& fn,
       SetupDefaultBlobsInOut(inputs, outputs, nullptr, nullptr, &tmp_req,
                              &input_blobs, &output_blobs, &pre_temp_src, &pre_temp_dst,
                              &post_temp_src, &post_temp_dst, &in_temp_idx_map, mutate_idx);
-      double t1 = dmlc::GetTime() - t1s;
-      LOG(INFO) << "----Set blobs: " << t1;
-      double t2s = dmlc::GetTime();
       // setup context
       OpContext opctx{need_grad, is_train, rctx, engine::CallbackOnComplete(), requested};
       bool is_gpu = ctx.dev_mask() == gpu::kDevMask;
-      double t2 = dmlc::GetTime() - t2s;
-      LOG(INFO) << "----Set opctx: " << t2;
-      double t3s = dmlc::GetTime();
       // pre-fcompute fallback, cast to default storage type
       CastNonDefaultStorage(pre_temp_src, pre_temp_dst, opctx, is_gpu);
-      double t3 = dmlc::GetTime() - t3s;
-      LOG(INFO) << "----Pre cast: " << t3;
+      double t3s = dmlc::GetTime();
       fn(attrs, opctx, input_blobs, tmp_req, output_blobs);
-      double t4s = dmlc::GetTime();
+      double t3 = dmlc::GetTime() - t3s;
+      LOG(INFO) << "----Fn: " << t3;
       // post-fcompute fallback, cast to original storage type
       CastNonDefaultStorage(post_temp_src, post_temp_dst, opctx, is_gpu);
-      double t4 = dmlc::GetTime() - t4s;
-      LOG(INFO) << "----Post cast: " << t4;
       if (is_gpu && !rctx.is_bulk) {
         rctx.get_stream<gpu>()->Wait();
       }
