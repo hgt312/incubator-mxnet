@@ -436,7 +436,7 @@ void FillCompute(const nnvm::NodeAttrs& attrs,
   double start = dmlc::GetTime();
   Fill<true>(ctx.get_stream<xpu>(), outputs[0], req[0], value);
   double elapsed = dmlc::GetTime() - start;
-  LOG(INFO) << "FCompute: " << elapsed;
+  LOG(INFO) << "--------FCompute: " << elapsed;
 }
 
 /*! \brief Fill output with a scalar integer value */
