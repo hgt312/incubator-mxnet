@@ -122,7 +122,7 @@ void MXImperativeInvokeImpl(AtomicSymbolCreator creator,
     *outputs = reinterpret_cast<NDArrayHandle*>(dmlc::BeginPtr(ret->ret_handles));
   }
   double elapsed = dmlc::GetTime() - start;
-  LOG(INFO) << elapsed;
+  LOG(INFO) << "Total: " << elapsed;
 }
 
 int MXImperativeInvoke(AtomicSymbolCreator creator,
