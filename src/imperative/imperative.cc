@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <dmlc/timer.h>
 #include <unordered_set>
 #include <iostream>
 #include "./imperative_utils.h"
@@ -47,7 +46,6 @@ OpStatePtr Imperative::InvokeOp(
     const DispatchMode dispatch_mode,
     OpStatePtr state) {
   using namespace imperative;
-  double t1s = dmlc::GetTime();
   static auto& createop = nnvm::Op::GetAttr<FCreateOpState>("FCreateOpState");
   static auto& is_layer_backward = Op::GetAttr<bool>("TIsLayerOpBackward");
   MXAPIThreadLocalEntry<> *ret = MXAPIThreadLocalStore<>::Get();
@@ -67,10 +65,7 @@ OpStatePtr Imperative::InvokeOp(
 
   FCompute fn = common::GetFCompute<FCompute>(op, "FCompute", ctx);
   FComputeEx fn_ex = common::GetFCompute<FComputeEx>(op, "FComputeEx", ctx);
-  double t1 = dmlc::GetTime() - t1s;
-  LOG(INFO) << "----Before push: " << t1;
 
-  double t2s;
   // FComputeEx is dispatched only when dispatch_mode is DispatchMode::kFComputeEx
   CHECK(dispatch_mode != DispatchMode::kUndefined);
   bool dispatch_fcompex = dispatch_mode == DispatchMode::kFComputeEx;
@@ -78,7 +73,6 @@ OpStatePtr Imperative::InvokeOp(
     PushFComputeEx(fn_ex, op, attrs, ctx, read_vars, write_vars,
         requested, inputs, outputs, req);
   } else if (fn) {
-    t2s = dmlc::GetTime();
     PushFCompute(fn, op, attrs, ctx, read_vars, write_vars,
         requested, inputs, outputs, mutate_idx, req);
   } else if (createop.count(op) || is_layer_backward.get(op, false)) {
@@ -94,8 +88,6 @@ OpStatePtr Imperative::InvokeOp(
       << (ctx.dev_mask() == gpu::kDevMask ? "GPU." : "CPU.");
   }
 
-  double t2 = dmlc::GetTime() - t2s;
-  LOG(INFO) << "----Push: " << t2;
   return state;
 }
 

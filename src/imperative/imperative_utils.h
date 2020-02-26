@@ -20,6 +20,7 @@
 #include <mxnet/executor.h>
 #include <mxnet/imperative.h>
 #include <nnvm/pass_functions.h>
+#include <dmlc/timer.h>
 #include <utility>
 #include <algorithm>
 #include <vector>
@@ -469,6 +470,7 @@ inline void PushFCompute(const FCompute& fn,
                   const std::vector<uint32_t>& mutate_idx,
                   const std::vector<OpReqType>& req) {
   using namespace common;
+  double t3s = dmlc::GetTime();
   static auto& fexec_type = nnvm::Op::GetAttr<FExecType>("FExecType");
 
   bool is_train = Imperative::Get()->is_training();
@@ -477,6 +479,8 @@ inline void PushFCompute(const FCompute& fn,
   CHECK(exec_type == ExecType::kSync);
   std::vector<NDArray> inputs, outputs;
   DerefInputOutput(p_inputs, p_outputs, &inputs, &outputs);
+  double t3 = dmlc::GetTime() - t3s;
+  LOG(INFO) << "----Before pushsync: " << t3;
   Engine::Get()->PushSync(
     [=](RunContext rctx) {
       std::vector<TBlob> input_blobs, output_blobs;
