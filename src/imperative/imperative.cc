@@ -47,6 +47,7 @@ OpStatePtr Imperative::InvokeOp(
     const DispatchMode dispatch_mode,
     OpStatePtr state) {
   using namespace imperative;
+  double t1s = dmlc::GetTime();
   static auto& createop = nnvm::Op::GetAttr<FCreateOpState>("FCreateOpState");
   static auto& is_layer_backward = Op::GetAttr<bool>("TIsLayerOpBackward");
   MXAPIThreadLocalEntry<> *ret = MXAPIThreadLocalStore<>::Get();
@@ -66,7 +67,10 @@ OpStatePtr Imperative::InvokeOp(
 
   FCompute fn = common::GetFCompute<FCompute>(op, "FCompute", ctx);
   FComputeEx fn_ex = common::GetFCompute<FComputeEx>(op, "FComputeEx", ctx);
+  double t1 = dmlc::GetTime() - t1s;
+  LOG(INFO) << "----Before push: " << t1;
 
+  double t2s = dmlc::GetTime();
   // FComputeEx is dispatched only when dispatch_mode is DispatchMode::kFComputeEx
   CHECK(dispatch_mode != DispatchMode::kUndefined);
   bool dispatch_fcompex = dispatch_mode == DispatchMode::kFComputeEx;
@@ -89,6 +93,8 @@ OpStatePtr Imperative::InvokeOp(
       << (ctx.dev_mask() == gpu::kDevMask ? "GPU." : "CPU.");
   }
 
+  double t2 = dmlc::GetTime() - t2s;
+  LOG(INFO) << "----Push: " << t2;
   return state;
 }
 
