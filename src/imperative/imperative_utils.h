@@ -470,6 +470,7 @@ inline void PushFCompute(const FCompute& fn,
                   const std::vector<uint32_t>& mutate_idx,
                   const std::vector<OpReqType>& req) {
   using namespace common;
+  double t0s = dmlc::GetTime();
   static auto& fexec_type = nnvm::Op::GetAttr<FExecType>("FExecType");
 
   bool is_train = Imperative::Get()->is_training();
@@ -478,6 +479,8 @@ inline void PushFCompute(const FCompute& fn,
   CHECK(exec_type == ExecType::kSync);
   std::vector<NDArray> inputs, outputs;
   DerefInputOutput(p_inputs, p_outputs, &inputs, &outputs);
+  double t0 = dmlc::GetTime() - t0s;
+  LOG(INFO) << "----Before Fn 1: " << t0;
   Engine::Get()->PushSync(
     [=](RunContext rctx) {
       double t1s = dmlc::GetTime();
@@ -507,16 +510,19 @@ inline void PushFCompute(const FCompute& fn,
       // pre-fcompute fallback, cast to default storage type
       CastNonDefaultStorage(pre_temp_src, pre_temp_dst, opctx, is_gpu);
       double t1 = dmlc::GetTime() - t1s;
-      LOG(INFO) << "----Before Fn: " << t1;
+      LOG(INFO) << "----Before Fn 2: " << t1;
       double t3s = dmlc::GetTime();
       fn(attrs, opctx, input_blobs, tmp_req, output_blobs);
       double t3 = dmlc::GetTime() - t3s;
       LOG(INFO) << "----Fn: " << t3;
+      double t4s = dmlc::GetTime();
       // post-fcompute fallback, cast to original storage type
       CastNonDefaultStorage(post_temp_src, post_temp_dst, opctx, is_gpu);
       if (is_gpu && !rctx.is_bulk) {
         rctx.get_stream<gpu>()->Wait();
       }
+      double t4 = dmlc::GetTime() - t4s;
+      LOG(INFO) << "----After Fn: " << t4;
     }, ctx, read_vars, write_vars, FnProperty::kNormal,
     0, op->name.c_str());
 }
