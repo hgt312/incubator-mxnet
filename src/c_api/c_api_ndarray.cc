@@ -115,11 +115,11 @@ void MXImperativeInvokeImpl(AtomicSymbolCreator creator,
 
   double t3s = dmlc::GetTime();
   auto state = Imperative::Get()->Invoke(Context::CPU(), attrs, ndinputs, ndoutputs);
+  double t3 = dmlc::GetTime() - t3s;
+  LOG(INFO) << "Invoke: " << t3;
   if (Imperative::Get()->is_recording()) {
     Imperative::Get()->RecordOp(std::move(attrs), ndinputs, ndoutputs, state);
   }
-  double t3 = dmlc::GetTime() - t3s;
-  LOG(INFO) << "Invoke: " << t3;
 
   double t4s = dmlc::GetTime();
   for (int i = *num_outputs; i < infered_num_outputs; ++i) delete ndoutputs[i];
