@@ -114,7 +114,8 @@ void MXImperativeInvokeImpl(AtomicSymbolCreator creator,
   LOG(INFO) << "SetNDInputsOutputs: " << t2;
 
   double t3s = dmlc::GetTime();
-  auto state = Imperative::Get()->Invoke(Context::CPU(), attrs, ndinputs, ndoutputs);
+  static Context default_ctx = Context::CPU();
+  auto state = Imperative::Get()->Invoke(default_ctx, attrs, ndinputs, ndoutputs);
   double t3 = dmlc::GetTime() - t3s;
   LOG(INFO) << "Invoke: " << t3;
   if (Imperative::Get()->is_recording()) {

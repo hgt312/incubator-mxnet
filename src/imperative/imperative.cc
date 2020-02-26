@@ -98,7 +98,6 @@ OpStatePtr Imperative::Invoke(
     const std::vector<NDArray*>& inputs,
     const std::vector<NDArray*>& outputs) {
   using namespace imperative;
-  double ts = dmlc::GetTime();
   static auto& ndfunc = nnvm::Op::GetAttr<FNDArrayFunction>("FNDArrayFunction");
 
   if (ndfunc.count(attrs.op)) {
@@ -124,8 +123,6 @@ OpStatePtr Imperative::Invoke(
       outputs[i]->SetShapeFromChunk();
     }
   }
-  double t = dmlc::GetTime() - ts;
-  LOG(INFO) << "Invoke: " << t;
   return ret;
 }
 
