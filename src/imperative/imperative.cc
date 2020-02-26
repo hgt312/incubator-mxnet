@@ -98,6 +98,7 @@ OpStatePtr Imperative::Invoke(
     const std::vector<NDArray*>& inputs,
     const std::vector<NDArray*>& outputs) {
   using namespace imperative;
+  double t0s = dmlc::GetTime();
   static auto& ndfunc = nnvm::Op::GetAttr<FNDArrayFunction>("FNDArrayFunction");
 
   if (ndfunc.count(attrs.op)) {
@@ -107,6 +108,8 @@ OpStatePtr Imperative::Invoke(
     for (size_t i = 0; i < outputs.size(); ++i) *outputs[i] = std::move(p_outputs[i]);
     return OpStatePtr();
   }
+  double t0 = dmlc::GetTime() - t0s;
+  LOG(INFO) << "---If part: " << t0;
 
   double t1s = dmlc::GetTime();
   // TODO(piiswrong): infer ctx
@@ -116,11 +119,12 @@ OpStatePtr Imperative::Invoke(
   std::vector<OpReqType> req;
   SetWriteInplaceReq(inputs, outputs, &req);
   double t1 = dmlc::GetTime() - t1s;
-  LOG(INFO) << "Before compute: " << t1;
+  LOG(INFO) << "---Before InvokeOp: " << t1;
   double t2s = dmlc::GetTime();
   OpStatePtr ret = InvokeOp(ctx, attrs, inputs, outputs, req, dispatch_mode);
   double t2 = dmlc::GetTime() - t2s;
-  LOG(INFO) << "InvokeOp: " << t2;
+  LOG(INFO) << "---InvokeOp: " << t2;
+  double t3s = dmlc::GetTime();
   // the followinng loop is used for finding out the correct shape when some shapes are dynamic
   for (size_t i = 0; i < outputs.size(); i++) {
     if (!shape_is_known(outputs[i]->shape())) {
@@ -129,6 +133,8 @@ OpStatePtr Imperative::Invoke(
       outputs[i]->SetShapeFromChunk();
     }
   }
+  double t3 = dmlc::GetTime() - t3s;
+  LOG(INFO) << "---After InvokeOp: " << t3;
   return ret;
 }
 
