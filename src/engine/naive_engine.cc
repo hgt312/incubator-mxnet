@@ -22,6 +22,7 @@
  * \file naive_engine.cc
  * \brief Implementation of NaiveEngine
  */
+#include <dmlc/timer.h>
 #include <vector>
 #include <atomic>
 #include <thread>
@@ -155,6 +156,7 @@ class NaiveEngine final : public Engine {
                  int priority = 0,
                  const char* opr_name = nullptr,
                  bool wait = false) override {
+    double t0s = dmlc::GetTime();
     bool req_completed = false;
     CallbackOnComplete callback = CreateCallback(
         NaiveEngine::OnComplete, &req_completed);
@@ -177,6 +179,8 @@ class NaiveEngine final : public Engine {
       opr->opr_profile.reset(new profiler::ProfileOperator(opr->opr_name, attrs.release()));
       opr->opr_profile->startForDevice(exec_ctx.dev_type, exec_ctx.dev_id);
     }
+    double t0 = dmlc::GetTime() - t0s;
+    LOG(INFO) << "----Engine: " << t0;
     if (exec_ctx.dev_mask() == gpu::kDevMask) {
 #if MXNET_USE_CUDA
       size_t dev_id = static_cast<size_t>(exec_ctx.dev_id);
