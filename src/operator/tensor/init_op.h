@@ -31,6 +31,7 @@
 #include <mxnet/imperative.h>
 #include <dmlc/parameter.h>
 #include <dmlc/optional.h>
+#include <dmlc/timer.h>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -432,7 +433,10 @@ void FillCompute(const nnvm::NodeAttrs& attrs,
                  const std::vector<TBlob>& inputs,
                  const std::vector<OpReqType>& req,
                  const std::vector<TBlob>& outputs) {
+  double start = dmlc::GetTime();
   Fill<true>(ctx.get_stream<xpu>(), outputs[0], req[0], value);
+  double elapsed = dmlc::GetTime() - start;
+  LOG(INFO) << "FCompute: " << elapsed;
 }
 
 /*! \brief Fill output with a scalar integer value */
