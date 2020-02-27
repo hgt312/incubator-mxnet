@@ -20,6 +20,7 @@
 #include <mxnet/executor.h>
 #include <mxnet/imperative.h>
 #include <nnvm/pass_functions.h>
+#include <dmlc/timer.h>
 #include <utility>
 #include <algorithm>
 #include <vector>
@@ -106,6 +107,7 @@ inline void SetShapeType(const Context& ctx,
   static auto& infertype = nnvm::Op::GetAttr<nnvm::FInferType>("FInferType");
   static auto& inferstorage = nnvm::Op::GetAttr<FInferStorageType>("FInferStorageType");
   MXAPIThreadLocalEntry<> *ret = MXAPIThreadLocalStore<>::Get();
+  double t1s = dmlc::GetTime();
   // infer shape
   mxnet::ShapeVector& in_shapes  = ret->arg_shapes;
   in_shapes.clear();
@@ -147,6 +149,9 @@ inline void SetShapeType(const Context& ctx,
     }
     CHECK_EQ(out_shapes.size(), outputs.size());
   }
+  double t1 = dmlc::GetTime() - t1s;
+  LOG(INFO) << "----InferShape: " << t1;
+  double t2s = dmlc::GetTime();
   // infer type
   std::vector<int>& in_types = ret->arg_types;
   in_types.clear();
@@ -168,7 +173,10 @@ inline void SetShapeType(const Context& ctx,
   }
   CHECK(infer_type_success) << "Operator " << attrs.op->name << " is missing FInferType attribute";
   CHECK_EQ(out_types.size(), outputs.size());
+  double t2 = dmlc::GetTime() - t2s;
+  LOG(INFO) << "----InferType: " << t2;
 
+  double t3s = dmlc::GetTime();
   // infer storage type
   auto& in_storage_types = ret->arg_storage_types;
   in_storage_types.clear();
@@ -199,7 +207,10 @@ inline void SetShapeType(const Context& ctx,
 
   CHECK_EQ(out_storage_types.size(), outputs.size());
   CHECK(*dispatch_mode != DispatchMode::kUndefined);
+  double t3 = dmlc::GetTime() - t3s;
+  LOG(INFO) << "----InferStorageType: " << t3;
 
+  double t4s = dmlc::GetTime();
   for (size_t i = 0; i < outputs.size(); ++i) {
     NDArrayStorageType storage_type = static_cast<NDArrayStorageType>(out_storage_types[i]);
     if (outputs[i]->is_none() || mxnet::op::shape_is_none(outputs[i]->shape())) {
@@ -222,6 +233,8 @@ inline void SetShapeType(const Context& ctx,
         << outputs[i]->dtype()  << " in operator " << attrs.op->name;
     }
   }
+  double t4 = dmlc::GetTime() - t4s;
+  LOG(INFO) << "----Final: " << t4;
 }
 
 inline bool IsNaiveEngine() {

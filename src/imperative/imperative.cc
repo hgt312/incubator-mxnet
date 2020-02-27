@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <dmlc/timer.h>
 #include <unordered_set>
 #include <iostream>
 #include "./imperative_utils.h"
@@ -111,15 +110,9 @@ OpStatePtr Imperative::Invoke(
   // TODO(piiswrong): infer ctx
   DispatchMode dispatch_mode = DispatchMode::kUndefined;
   Context ctx = GetContext(attrs, inputs, outputs, default_ctx);
-  double t1s = dmlc::GetTime();
   SetShapeType(ctx, attrs, inputs, outputs, &dispatch_mode);
-  double t1 = dmlc::GetTime() - t1s;
-  LOG(INFO) << "----SetShapeType: " << t1;
   std::vector<OpReqType> req;
-  double t2s = dmlc::GetTime();
   SetWriteInplaceReq(inputs, outputs, &req);
-  double t2 = dmlc::GetTime() - t2s;
-  LOG(INFO) << "----SetWriteInplaceReq: " << t2;
   OpStatePtr ret = InvokeOp(ctx, attrs, inputs, outputs, req, dispatch_mode);
   // the followinng loop is used for finding out the correct shape when some shapes are dynamic
   for (size_t i = 0; i < outputs.size(); i++) {
