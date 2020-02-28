@@ -466,8 +466,8 @@ inline void DerefInputOutput(const std::vector<NDArray*>& inputs,
                              std::vector<NDArray>* p_outputs) {
   p_inputs->reserve(inputs.size());
   p_outputs->reserve(outputs.size());
-  for (NDArray* i : inputs) p_inputs->push_back(*i);
-  for (NDArray* i : outputs) p_outputs->push_back(*i);
+  for (NDArray* i : inputs) p_inputs->emplace_back(*i);
+  for (NDArray* i : outputs) p_outputs->emplace_back(*i);
 }
 
 inline void PushFCompute(const FCompute& fn,
