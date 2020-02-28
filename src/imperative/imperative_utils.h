@@ -218,7 +218,7 @@ inline void SetShapeType(const Context& ctx,
         // once there is dynamic shape somewhere, we could not pre-determine the shape.
         *outputs[i] = NDArray(ctx, out_types[i]);
       } else if (storage_type == kDefaultStorage) {
-        *outputs[i] = NDArray(out_shapes[i], ctx, true, out_types[i]);
+        *outputs[i] = std::move(NDArray(out_shapes[i], ctx, true, out_types[i]));
       } else {
         *outputs[i] = NDArray(storage_type, out_shapes[i], ctx, true, out_types[i]);
       }
@@ -466,8 +466,8 @@ inline void DerefInputOutput(const std::vector<NDArray*>& inputs,
                              std::vector<NDArray>* p_outputs) {
   p_inputs->reserve(inputs.size());
   p_outputs->reserve(outputs.size());
-  for (NDArray* i : inputs) p_inputs->emplace_back(*i);
-  for (NDArray* i : outputs) p_outputs->emplace_back(*i);
+  for (NDArray* i : inputs) p_inputs->emplace_back(std::move(*i));
+  for (NDArray* i : outputs) p_outputs->emplace_back(std::move(*i));
 }
 
 inline void PushFCompute(const FCompute& fn,
